@@ -7,7 +7,7 @@ This is the **Python/Flask** version of AquaSense. The frontend is identical to 
 
 AquaSense lets a household or hostel log water usage in plain language, flags readings that look like a leak or overuse against a personal rolling baseline, retrieves a relevant conservation tip from a small curated knowledge base (a simplified, retrieval-augmented approach), and forecasts month-end usage from the trend observed so far.
 
-## ✨ Features
+## Features
 
 - **Conversational logging** — type "Used 40 litres for laundry today" and it's parsed and logged automatically
 - **Anomaly / leak detection** — every reading is compared to a rolling per-activity baseline
@@ -18,7 +18,7 @@ AquaSense lets a household or hostel log water usage in plain language, flags re
 - **Vibrant, glassmorphism UI** — an Aqua/Eco-SaaS visual design with translucent cards, gradient accents, and header/card imagery (all styling is self-contained in `index.html`, no separate CSS file)
 - **No Node.js required** — both the backend (Python) and the simplest way to serve the frontend (Python's built-in web server) only need Python
 
-## 🗂️ Project Structure
+## Project Structure
 
 ```
 aquasense/
@@ -41,13 +41,11 @@ aquasense/
 │   │   └── store.py           # simple JSON file persistence
 │   ├── requirements.txt
 │   └── .env.example
-├── docs/
-│   └── AquaSense_Project_Guide.pptx   # submission deck (SDG mapping, design thinking, etc.)
 ├── .gitignore
 └── README.md
 ```
 
-## 🚀 Getting Started
+##  Getting Started
 
 ### Prerequisites
 
@@ -128,7 +126,7 @@ curl -X POST http://localhost:5000/api/entries \
   -d '{"activity":"laundry","litres":40}'
 ```
 
-## 🧠 How the "AI" Works
+##  How the "AI" Works
 
 1. **NLU (frontend, rule-based):** `parseMessage()` in `frontend/js/app.js` extracts an activity keyword and a number of litres from free text using simple keyword and regex matching. This runs in the browser, same as the Node edition.
 2. **Pattern detection (backend):** `classify()` in `backend/utils/classify.py` compares a new reading to the mean of all previous readings for that activity — flags `high` (≥30% above baseline, possible leak/overuse) or `low` (≥30% below, good behaviour).
@@ -144,7 +142,7 @@ To extend this into a true LLM-backed assistant (e.g. with IBM Granite or IBM BO
 - Replace the flat `knowledge_base.py` list with embeddings + a vector store (e.g. Chroma, FAISS) and do similarity search instead of tag matching in `retrieve_tip()`
 - Everything else (classification, forecasting, routes, frontend) stays the same
 
-## 🔐 Responsible AI
+##  Responsible AI
 
 | Principle | How it's addressed |
 |---|---|
@@ -153,13 +151,13 @@ To extend this into a true LLM-backed assistant (e.g. with IBM Granite or IBM BO
 | **Ethics** | Tone is supportive, never punitive — the goal is habit change, not shaming |
 | **Privacy** | Data is stored in a local JSON file for this prototype; no third-party sharing, and it's straightforward to add per-user auth, encryption, or delete-on-request for a production version |
 
-## 📦 Deployment Notes
+##  Deployment Notes
 
 - **Backend:** deploy `backend/` to Render, Railway, PythonAnywhere, or a small VM. Use a production WSGI server (e.g. `gunicorn app:app`) instead of Flask's built-in dev server — `pip install gunicorn` and run `gunicorn -w 2 -b 0.0.0.0:5000 app:app` from inside `backend/`. Set `PORT` and `CORS_ORIGIN` env vars.
 - **Frontend:** deploy `frontend/` as a static site (Netlify, Vercel, GitHub Pages). Set `window.AQUASENSE_API_BASE` to your deployed backend URL.
 - **Database:** the JSON file store in `backend/data/store.py` is fine for a demo; swap in Postgres (via SQLAlchemy) or MongoDB (via PyMongo) for multi-user production use.
 
-## 🎨 A Note on the Design
+##  A Note on the Design
 
 `frontend/index.html` loads a Google Font (Plus Jakarta Sans) and a couple of Unsplash photos for the header banner and one card accent, both over the internet. If that request is offline or a network blocks those domains, the page still looks correct — it falls back to system fonts and a plain gradient background (no broken layout, just less imagery). Everything the app actually *does* (logging, chat, the dashboard) is unaffected either way, since that only depends on your local backend, not on those external assets.
 
