@@ -161,7 +161,7 @@ To extend this into a true LLM-backed assistant (e.g. with IBM Granite or IBM BO
 
 `frontend/index.html` loads a Google Font (Plus Jakarta Sans) and a couple of Unsplash photos for the header banner and one card accent, both over the internet. If that request is offline or a network blocks those domains, the page still looks correct — it falls back to system fonts and a plain gradient background (no broken layout, just less imagery). Everything the app actually *does* (logging, chat, the dashboard) is unaffected either way, since that only depends on your local backend, not on those external assets.
 
-## 🧪 Verified Working
+##  Verified Working
 
 This exact folder was run and tested end-to-end before packaging: `pip install`, `python app.py`, all 7 API endpoints (health, list/add/delete entries, stats, tips, seed), and the static frontend served against the live API with a real CORS preflight check — all passed.
 
