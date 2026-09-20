@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AquaSense — AI Water Usage Advisor</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>💧</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="js/vendor/chart.umd.js"></script>
+<style>
+  /* ============ Design tokens — Aqua / Eco-SaaS ============ */
+  :root{
+    --ocean-deep:#023E73;
+    --ocean:#0582CA;
+    --teal:#00B4A6;
+    --teal-bright:#14E1CB;
+    --green:#22C55E;
+    --green-soft:#34D399;
+    --mint-bg:#EAFBFA;
+    --sky-bg:#EAF6FF;
+    --ink:#0B2430;
+    --mute:#3F6270;
+    --glass:rgba(255,255,255,0.62);
+    --glass-strong:rgba(255,255,255,0.82);
+    --glass-border:rgba(255,255,255,0.75);
+    --line:rgba(3,90,110,0.14);
+    --warn:#E0432B;
+    --good:#0E9F6E;
+    --shadow-lg:0 20px 45px -18px rgba(2,62,115,0.35);
+    --shadow-sm:0 8px 22px -10px rgba(2,62,115,0.22);
+  }
+
+  *{ box-sizing:border-box; }
+
+  html{ scroll-behavior:smooth; }
+
+  body{
+    margin:0;
+    min-height:100vh;
+    color:var(--ink);
+    font-family:'Plus Jakarta Sans','Inter',-apple-system,'Segoe UI',Roboto,Arial,sans-serif;
+    background:
+      radial-gradient(1100px 600px at 85% -10%, rgba(20,225,203,0.18), transparent 60%),
+      radial-gradient(900px 500px at -10% 20%, rgba(5,130,202,0.14), transparent 55%),
+      linear-gradient(180deg, var(--sky-bg) 0%, var(--mint-bg) 55%, #F4FFFB 100%);
+    position:relative;
+  }
+
+  /* ambient full-bleed ocean texture behind everything, very low opacity */
+  body::before{
+    content:"";
+    position:fixed;
+    inset:0;
+    z-index:-1;
+    background-image:url('https://images.unsplash.com/photo-1439405326854-014607f694d7?auto=format&fit=crop&w=1800&q=60');
+    background-size:cover;
+    background-position:center;
+    opacity:0.07;
+    filter:saturate(1.3);
+    pointer-events:none;
+  }
+
+  ::selection{ background:var(--teal-bright); color:#04303A; }
+
+  /* custom scrollbar for the chat log */
+  #chatlog::-webkit-scrollbar{ width:8px; }
+  #chatlog::-webkit-scrollbar-track{ background:transparent; }
+  #chatlog::-webkit-scrollbar-thumb{ background:rgba(0,180,166,0.35); border-radius:8px; }
+  #chatlog::-webkit-scrollbar-thumb:hover{ background:rgba(0,180,166,0.6); }
+
+  /* ============ Header — hero banner over ocean imagery ============ */
+  header{
+    position:relative;
+    overflow:hidden;
+    color:#fff;
+    padding:34px clamp(18px,4vw,44px);
+    display:flex; align-items:center; justify-content:space-between; gap:18px; flex-wrap:wrap;
+    background-image:
+      linear-gradient(120deg, rgba(2,40,80,0.88) 10%, rgba(0,140,150,0.72) 60%, rgba(20,225,203,0.55) 100%),
+      url('https://images.unsplash.com/photo-1439405326854-014607f694d7?auto=format&fit=crop&w=1800&q=80');
+    background-size:cover;
+    background-position:center 62%;
+    box-shadow:var(--shadow-lg);
+  }
+  header h1{
+    margin:0;
+    font-size:2rem;
+    font-weight:800;
+    letter-spacing:-0.02em;
+    text-shadow:0 2px 18px rgba(0,0,0,0.25);
+  }
+  header p{
+    margin:6px 0 0;
+    font-size:0.95rem;
+    font-weight:500;
+    color:rgba(255,255,255,0.92);
+  }
+  .badge{
+    background:rgba(255,255,255,0.16);
+    border:1px solid rgba(255,255,255,0.4);
+    backdrop-filter:blur(10px);
+    -webkit-backdrop-filter:blur(10px);
+    padding:10px 18px;
+    border-radius:999px;
+    font-size:0.85rem;
+    font-weight:600;
+    white-space:nowrap;
+    box-shadow:0 4px 18px rgba(0,0,0,0.15);
+  }
+
+  /* ============ Layout ============ */
+  main{
+    max-width:1240px;
+    margin:0 auto;
+    padding:28px clamp(18px,4vw,44px) 70px;
+    display:grid;
+    grid-template-columns:1.1fr 1fr;
+    gap:26px;
+  }
+  @media (max-width:880px){ main{ grid-template-columns:1fr; } }
+
+  /* ============ Glass cards ============ */
+  .card{
+    position:relative;
+    background:var(--glass);
+    backdrop-filter:blur(18px);
+    -webkit-backdrop-filter:blur(18px);
+    border:1px solid var(--glass-border);
+    border-radius:16px;
+    padding:22px 22px 20px;
+    margin-bottom:24px;
+    overflow-x:auto;
+    box-shadow:var(--shadow-sm);
+    transition:transform .28s ease, box-shadow .28s ease;
+  }
+  .card:hover{
+    transform:translateY(-3px);
+    box-shadow:var(--shadow-lg);
+  }
+  .card h2{
+    margin:0 0 4px;
+    font-size:1.18rem;
+    font-weight:800;
+    letter-spacing:-0.01em;
+    color:var(--ocean-deep);
+  }
+  .card .sub{ color:var(--mute); font-size:0.86rem; margin-bottom:16px; font-weight:500; }
+
+  /* subtle eco-image accent strip on the Responsible AI card only */
+  main > div:first-child > .card:nth-of-type(2){
+    padding-top:86px;
+  }
+  main > div:first-child > .card:nth-of-type(2)::before{
+    content:"";
+    position:absolute;
+    top:0; left:0; right:0;
+    height:70px;
+    border-radius:16px 16px 0 0;
+    background-image:
+      linear-gradient(120deg, rgba(2,62,115,0.55), rgba(34,197,94,0.5)),
+      url('https://images.unsplash.com/photo-1441974231531-c6227db76b6e?auto=format&fit=crop&w=1200&q=70');
+    background-size:cover;
+    background-position:center;
+  }
+
+  /* ============ Chat ============ */
+  #chatlog{
+    height:340px; overflow-y:auto;
+    display:flex; flex-direction:column; gap:12px;
+    padding:6px 4px 10px; margin-bottom:14px;
+  }
+  .msg{
+    max-width:82%; padding:12px 15px; border-radius:16px;
+    font-size:0.93rem; line-height:1.48; font-weight:500;
+    box-shadow:0 6px 16px -8px rgba(2,62,115,0.25);
+  }
+  .msg.user{
+    align-self:flex-end;
+    background:linear-gradient(135deg, #DFF7F3, #E9F7FF);
+    color:var(--ink);
+    border:1px solid rgba(0,180,166,0.25);
+    border-bottom-right-radius:4px;
+  }
+  .msg.ai{
+    align-self:flex-start;
+    background:linear-gradient(135deg, var(--ocean-deep), var(--teal));
+    color:#fff;
+    border-bottom-left-radius:4px;
+  }
+  .msg .tag{
+    display:block; font-size:0.66rem; font-weight:800;
+    letter-spacing:0.08em; opacity:0.75; margin-bottom:4px;
+  }
+  .msg.user .tag{ color:var(--ocean); }
+  .msg.ai .tag{ color:#B9FBEF; }
+
+  .inputRow{ display:flex; gap:10px; }
+  input[type=text], select, input[type=number], input[type=date]{
+    background:rgba(255,255,255,0.75);
+    border:1.5px solid var(--line);
+    color:var(--ink);
+    border-radius:12px;
+    padding:11px 13px;
+    font-size:0.92rem;
+    font-family:inherit;
+    width:100%;
+    transition:border-color .2s ease, box-shadow .2s ease, background .2s ease;
+  }
+  input[type=text]:focus, select:focus, input[type=number]:focus, input[type=date]:focus{
+    outline:none;
+    border-color:var(--teal);
+    background:#fff;
+    box-shadow:0 0 0 4px rgba(0,180,166,0.18);
+  }
+
+  button{
+    background:linear-gradient(135deg, var(--teal), var(--green));
+    color:#fff;
+    border:none;
+    border-radius:999px;
+    padding:11px 22px;
+    font-size:0.92rem;
+    font-weight:700;
+    font-family:inherit;
+    cursor:pointer;
+    white-space:nowrap;
+    box-shadow:0 8px 20px -8px rgba(0,180,166,0.55);
+    transition:transform .18s ease, box-shadow .18s ease, filter .18s ease;
+  }
+  button:hover{
+    transform:translateY(-2px);
+    box-shadow:0 12px 26px -8px rgba(0,180,166,0.65);
+    filter:brightness(1.05);
+  }
+  button:active{ transform:translateY(0); }
+
+  button.secondary{
+    background:rgba(255,255,255,0.7);
+    color:var(--ocean-deep);
+    border:1.5px solid rgba(0,180,166,0.4);
+    box-shadow:none;
+  }
+  button.secondary:hover{
+    background:rgba(0,180,166,0.12);
+    box-shadow:0 6px 16px -8px rgba(0,180,166,0.4);
+  }
+
+  .quick{ display:flex; flex-wrap:wrap; gap:8px; margin-top:12px; }
+  .quick button{ font-size:0.8rem; padding:8px 14px; }
+
+  /* ============ Responsible AI grid ============ */
+  .rai-grid{ display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+  .rai-grid div{
+    background:rgba(255,255,255,0.7);
+    border-radius:14px;
+    padding:14px 15px;
+    font-size:0.83rem;
+    line-height:1.45;
+    border-left:4px solid var(--teal);
+    box-shadow:var(--shadow-sm);
+  }
+  .rai-grid div:nth-child(1){ border-left-color:var(--teal); }
+  .rai-grid div:nth-child(2){ border-left-color:var(--ocean); }
+  .rai-grid div:nth-child(3){ border-left-color:var(--green); }
+  .rai-grid div:nth-child(4){ border-left-color:#7C5CFC; }
+  .rai-grid b{
+    display:block; margin-bottom:5px;
+    color:var(--ocean-deep); font-weight:800; font-size:0.95rem;
+  }
+
+  /* ============ Dashboard: log form + stats ============ */
+  .logForm{
+    display:grid; grid-template-columns:1fr 1fr 1fr auto; gap:10px;
+    align-items:end; margin-bottom:18px;
+  }
+  .logForm label{
+    font-size:0.72rem; font-weight:700; color:var(--mute);
+    display:block; margin-bottom:5px; text-transform:none;
+  }
+  @media (max-width:600px){ .logForm{ grid-template-columns:1fr 1fr; } }
+
+  .statGrid{ display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin-bottom:20px; }
+  .stat{
+    border-radius:14px; padding:16px 12px; text-align:center;
+    color:#fff; box-shadow:var(--shadow-sm);
+  }
+  .stat:nth-child(1){ background:linear-gradient(150deg, var(--teal), #0596A6); }
+  .stat:nth-child(2){ background:linear-gradient(150deg, var(--ocean), var(--ocean-deep)); }
+  .stat:nth-child(3){ background:linear-gradient(150deg, var(--green-soft), var(--green)); }
+  .stat .num{ font-size:1.6rem; font-weight:800; letter-spacing:-0.01em; }
+  .stat .lbl{ font-size:0.72rem; margin-top:3px; font-weight:600; opacity:0.92; }
+
+  canvas#usageChart{ border-radius:12px; }
+
+  /* ============ Usage log table ============ */
+  .toolbar{ display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin-bottom:14px; }
+
+  table{ width:100%; border-collapse:separate; border-spacing:0; font-size:0.85rem; }
+  thead th{
+    background:linear-gradient(135deg, var(--ocean-deep), var(--teal));
+    color:#fff;
+    font-weight:700; font-size:0.72rem; letter-spacing:0.03em;
+    padding:10px 10px; text-align:left;
+  }
+  thead th:first-child{ border-top-left-radius:10px; }
+  thead th:last-child{ border-top-right-radius:10px; }
+  tbody td{ padding:9px 10px; border-bottom:1px solid var(--line); }
+  tbody tr:nth-child(even){ background:rgba(0,180,166,0.06); }
+  tbody tr:hover{ background:rgba(0,180,166,0.14); }
+
+  .flag-high{ color:var(--warn); font-weight:800; }
+  .flag-low{ color:var(--good); font-weight:800; }
+
+  /* ============ Footer ============ */
+  footer{
+    text-align:center;
+    color:var(--mute);
+    font-size:0.78rem;
+    font-weight:500;
+    padding:22px 20px 34px;
+    max-width:900px;
+    margin:0 auto;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <h1>💧 AquaSense</h1>
+    <p>AI-powered water usage advisor · SDG 6: Clean Water and Sanitation</p>
+  </div>
+  <div class="badge" id="apiStatus">Checking API…</div>
+</header>
+
+<main>
+  <!-- LEFT: Chat -->
+  <div>
+    <div class="card">
+      <h2>Talk to AquaSense</h2>
+      <div class="sub">Log usage in plain language, or ask how you're trending.</div>
+      <div id="chatlog"></div>
+      <div class="inputRow">
+        <input type="text" id="chatInput" placeholder="e.g. Used 40 litres for laundry today">
+        <button onclick="handleChatSend()">Send</button>
+      </div>
+      <div class="quick">
+        <button class="secondary" onclick="quick('Used 60 litres for bathing today')">Log bathing</button>
+        <button class="secondary" onclick="quick('Used 30 litres for cooking today')">Log cooking</button>
+        <button class="secondary" onclick="quick('How is my usage trending this month?')">Check trend</button>
+        <button class="secondary" onclick="quick('Give me a water saving tip')">Get a tip</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Responsible AI Considerations</h2>
+      <div class="sub">Implemented as a core value from day one.</div>
+      <div class="rai-grid">
+        <div><b>Fairness</b>Baselines are calculated per activity from your own history, not a generic national average.</div>
+        <div><b>Transparency</b>Every alert states the exact numbers compared (e.g. "40L vs your 25L average").</div>
+        <div><b>Ethics</b>Tone stays supportive — the goal is habit change, never shaming.</div>
+        <div><b>Privacy</b>Data is stored only on this server's local file for demo purposes — no third-party sharing, and it's easy to swap in per-user auth or delete-on-request.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- RIGHT: Dashboard -->
+  <div>
+    <div class="card">
+      <h2>Log a Reading</h2>
+      <div class="sub">Or use the chat on the left — both feed the same dashboard</div>
+      <div class="logForm">
+        <div>
+          <label>Activity</label>
+          <select id="fActivity">
+            <option value="laundry">Laundry</option>
+            <option value="bathing">Bathing</option>
+            <option value="cooking">Cooking</option>
+            <option value="cleaning">Cleaning</option>
+            <option value="gardening">Gardening</option>
+            <option value="other">Other</option>
+          </select>
+        </div>
+        <div>
+          <label>Litres</label>
+          <input type="number" id="fLitres" min="0" placeholder="e.g. 40">
+        </div>
+        <div>
+          <label>Date</label>
+          <input type="date" id="fDate">
+        </div>
+        <button onclick="logFromForm()">Add</button>
+      </div>
+
+      <div class="statGrid">
+        <div class="stat"><div class="num" id="statToday">0 L</div><div class="lbl">Today</div></div>
+        <div class="stat"><div class="num" id="statMonth">0 L</div><div class="lbl">This month</div></div>
+        <div class="stat"><div class="num" id="statForecast">0 L</div><div class="lbl">Forecast (month)</div></div>
+      </div>
+
+      <canvas id="usageChart" height="160"></canvas>
+    </div>
+
+    <div class="card">
+      <div class="toolbar">
+        <h2 style="margin-right:auto;">Usage Log</h2>
+        <button class="secondary" onclick="seedDemoData()">Load demo data</button>
+        <button class="secondary" onclick="clearAll()">Clear all</button>
+      </div>
+      <table>
+        <thead><tr><th>Date</th><th>Activity</th><th>Litres</th><th>vs baseline</th></tr></thead>
+        <tbody id="logTable"></tbody>
+      </table>
+    </div>
+  </div>
+</main>
+
+
+<footer>Every drop counts · Track your water use, build better habits, and make a lasting difference.
+<div> Thank You 😊</div>
+</footer>
+
+<script src="js/api.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
