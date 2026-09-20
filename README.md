@@ -1,4 +1,4 @@
-# 💧 AquaSense (Python Edition) — AI-Powered Smart Water Usage Advisor
+# 💧 AquaSense — AI-Powered Smart Water Usage Advisor
 
 
 > **SDG 6 — Clean Water and Sanitation** (secondary: SDG 12, SDG 13)
