@@ -1,0 +1,20 @@
+# Python
+venv/
+env/
+__pycache__/
+*.pyc
+
+# Environment
+.env
+
+# Runtime data (demo/local JSON store)
+backend/data/entries.json
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Logs
+*.log
