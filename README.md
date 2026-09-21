@@ -14,7 +14,6 @@ AquaSense lets a household or hostel log water usage in plain language, flags re
 - **Dashboard** — live chart, stat cards, and a usage log table
 - **Responsible AI panel** — states the fairness / transparency / ethics / privacy approach up front
 - **Vibrant, glassmorphism UI** — an Aqua/Eco-SaaS visual design with translucent cards, gradient accents, and header/card imagery (all styling is self-contained in `index.html`, no separate CSS file)
-- **No Node.js required** — both the backend (Python) and the simplest way to serve the frontend (Python's built-in web server) only need Python
 
 ## Project Structure
 
@@ -148,12 +147,6 @@ To extend this into a true LLM-backed assistant (e.g. with IBM Granite or IBM BO
 | **Transparency** | Every alert states the exact comparison that triggered it (e.g. "40L vs your 25L average") |
 | **Ethics** | Tone is supportive, never punitive — the goal is habit change, not shaming |
 | **Privacy** | Data is stored in a local JSON file for this prototype; no third-party sharing, and it's straightforward to add per-user auth, encryption, or delete-on-request for a production version |
-
-##  Deployment Notes
-
-- **Backend:** deploy `backend/` to Render, Railway, PythonAnywhere, or a small VM. Use a production WSGI server (e.g. `gunicorn app:app`) instead of Flask's built-in dev server — `pip install gunicorn` and run `gunicorn -w 2 -b 0.0.0.0:5000 app:app` from inside `backend/`. Set `PORT` and `CORS_ORIGIN` env vars.
-- **Frontend:** deploy `frontend/` as a static site (Netlify, Vercel, GitHub Pages). Set `window.AQUASENSE_API_BASE` to your deployed backend URL.
-- **Database:** the JSON file store in `backend/data/store.py` is fine for a demo; swap in Postgres (via SQLAlchemy) or MongoDB (via PyMongo) for multi-user production use.
 
 ##  A Note on the Design
 
