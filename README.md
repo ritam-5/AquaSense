@@ -101,7 +101,7 @@ Open `http://localhost:5500` in your browser. The header badge should read **"AP
 - Type things like *"Used 40 litres for laundry today"* or *"How is my usage trending?"*
 - Watch the dashboard chart, stat cards, and log table update live
 
-## 🔌 API Reference
+## API Reference
 
 Identical to the Node.js edition — same endpoints, same request/response shapes.
 
