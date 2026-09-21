@@ -3,8 +3,6 @@
 
 > **SDG 6 — Clean Water and Sanitation** (secondary: SDG 12, SDG 13)
 
-This is the **Python/Flask** version of AquaSense. The frontend is identical to the Node.js edition — only the backend has been rewritten in Python, so if you've already read the Node version's docs, the app's behaviour and API shape are the same.
-
 AquaSense lets a household or hostel log water usage in plain language, flags readings that look like a leak or overuse against a personal rolling baseline, retrieves a relevant conservation tip from a small curated knowledge base (a simplified, retrieval-augmented approach), and forecasts month-end usage from the trend observed so far.
 
 ## Features
